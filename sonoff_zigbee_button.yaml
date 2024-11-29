@@ -14,6 +14,8 @@ blueprint:
             model: WB01
           - manufacturer: eWeLink
             model: SNZB-01P
+          - manufacturer: coolkit
+            model: zigbee_ON_OFF_SWITCH_1000
           multiple: false
     mode:
       name: Automation mode
