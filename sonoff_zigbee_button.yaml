@@ -1,6 +1,7 @@
 blueprint:
   name: Sonoff Zigbee Button
-  description: Setup actions for three functions of the SONOFF Zigbee button with
+  description:
+    Setup actions for three functions of the SONOFF Zigbee button with
     Press, Double Press, and Hold.
   domain: automation
   input:
@@ -8,19 +9,16 @@ blueprint:
       name: Button
       description: The button to configure.
       selector:
-        device:
+        entity:
           filter:
-          - manufacturer: eWeLink
-            model: WB01
-          - manufacturer: eWeLink
-            model: SNZB-01P
-          - manufacturer: coolkit
-            model: zigbee_ON_OFF_SWITCH_1000
+            integration: sonoff
           multiple: false
     mode:
       name: Automation mode
-      description: The automation’s mode configuration option controls what happens when the automation is triggered while the actions
-        are still running from a previous trigger (see [Automation modes](https://www.home-assistant.io/docs/automation/modes/)).
+      description:
+        The automation’s mode configuration option controls what happens
+        when the automation is triggered while the actions are still running from
+        a previous trigger (see [Automation modes](https://www.home-assistant.io/docs/automation/modes/)).
       default: single
       selector:
         select:
@@ -29,6 +27,9 @@ blueprint:
             - restart
             - queued
             - parallel
+          custom_value: false
+          sort: false
+          multiple: false
     press_action:
       name: Press Action
       description: Action to perform on Press.
@@ -47,42 +48,29 @@ blueprint:
       default: []
       selector:
         action: {}
-  source_url: https://github.com/apollo1220/blueprints/blob/main/sonoff_zigbee_button.yaml
+  source_url: https://github.com/carrgilson/blueprints/blob/main/sonoff_zigbee_button.yaml
 variables:
-  button_id: !input 'button_id'
-  press_action: !input 'press_action'
-  double_press_action: !input 'double_press_action'
-  hold_action: !input 'hold_action'
-  mode: !input 'mode'
-mode: !input 'mode'
+  button_id: !input button_id
+  press_action: !input press_action
+  double_press_action: !input double_press_action
+  hold_action: !input hold_action
+  mode: !input mode
+mode: !input mode
 max_exceeded: silent
 trigger:
-- platform: event
-  event_type: zha_event
-  event_data:
-    device_id: !input 'button_id'
-    command: "toggle"
-- platform: event
-  event_type: zha_event
-  event_data:
-    device_id: !input 'button_id'
-    command: "on"
-- platform: event
-  event_type: zha_event
-  event_data:
-    device_id: !input 'button_id'
-    command: "off"
+  - platform: state
+    entity_id: !input button_id
 action:
-- choose:
-  - conditions:
-    - condition: template
-      value_template: '{{ trigger.event.data.command == "toggle" }}'
-    sequence: !input 'press_action'
-  - conditions:
-    - condition: template
-      value_template: '{{ trigger.event.data.command == "on" }}'
-    sequence: !input 'double_press_action'
-  - conditions:
-    - condition: template
-      value_template: '{{ trigger.event.data.command == "off" }}'
-    sequence: !input 'hold_action'
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.state == 'single'}}"
+        sequence: !input press_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.state == 'double'}}"
+        sequence: !input double_press_action
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.state == 'hold'}}"
+        sequence: !input hold_action
